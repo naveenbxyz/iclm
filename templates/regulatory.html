@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulatory Due Diligence - iCLM</title>
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .sidebar-icon {
+            flex-shrink: 0;
+        }
+        .sidebar-text {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-passed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status-manual-review {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-pending {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .check-card {
+            transition: all 0.2s ease;
+        }
+        .check-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 9999px;
+            height: 0.5rem;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar bg-white w-64 flex flex-col shadow-lg">
+            <div class="flex items-center justify-start p-4 border-b h-16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <h1 id="sidebar-title" class="text-xl font-bold ml-3 text-gray-800 sidebar-text">iCLM</h1>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a href="/" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="ml-4 sidebar-text">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-white bg-blue-600 rounded-lg font-semibold shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                    <span class="ml-4 sidebar-text">Regulatory DD</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                    <span class="ml-4 sidebar-text">Contract Setup</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span class="ml-4 sidebar-text">Account Setup</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+                    <span class="ml-4 sidebar-text">SSI Setup</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t mt-auto">
+                <button id="chat-toggle" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="ml-4 sidebar-text">Chat Assistant</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- Header -->
+            <header class="flex items-center justify-between pl-16 pr-8 border-b bg-white shadow-sm h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="toggle-sidebar" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <h2 class="text-lg font-semibold text-gray-900">Regulatory Due Diligence</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="trigger-demo" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Trigger Demo Classification
+                    </button>
+                    <button id="refresh-data" class="text-gray-500 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <p class="font-semibold text-gray-800">Anna Vance</p>
+                            <p class="text-gray-500">Ops Specialist</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 bg-gray-100 overflow-y-auto">
+                <div class="max-w-7xl mx-auto px-8 py-8">
+
+                    <!-- Page Header -->
+                    <div class="mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Regulatory Due Diligence</h1>
+                                    <p class="text-gray-600">Monitor and manage client regulatory classification processes across 20 regulations</p>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-blue-600" id="active-classifications">0</p>
+                                        <p class="text-sm text-gray-500">Active</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-green-600" id="completed-classifications">0</p>
+                                        <p class="text-sm text-gray-500">Completed</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-amber-600" id="pending-review">0</p>
+                                        <p class="text-sm text-gray-500">Pending Review</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Selection and Current Classification -->
+                    <div id="client-selection" class="mb-8">
+                        <!-- Content will be loaded dynamically -->
+                    </div>
+
+                    <!-- Three Check Categories -->
+                    <div id="check-categories" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 hidden">
+
+                        <!-- High-Level Checks Section -->
+                        <div class="bg-white rounded-xl shadow-sm border">
+                            <div class="p-6 border-b">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="bg-blue-50 p-2 rounded-full mr-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle></svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900">High-Level Checks</h3>
+                                    </div>
+                                    <span class="text-sm text-gray-500" id="hl-progress">0/0</span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Regulation</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hl-checks-table" class="bg-white divide-y divide-gray-200">
+                                        <!-- Content loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Document Checks Section -->
+                        <div class="bg-white rounded-xl shadow-sm border">
+                            <div class="p-6 border-b">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="bg-purple-50 p-2 rounded-full mr-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900">Document Validation</h3>
+                                    </div>
+                                    <span class="text-sm text-gray-500" id="doc-progress">0/0</span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Regulation</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">AI Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Confidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="doc-checks-table" class="bg-white divide-y divide-gray-200">
+                                        <!-- Content loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Data Quality Checks Section -->
+                        <div class="bg-white rounded-xl shadow-sm border">
+                            <div class="p-6 border-b">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="bg-green-50 p-2 rounded-full mr-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><path d="M12 20v-6M6 20v-2M18 20v-4"></path></svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900">Data Quality Checks</h3>
+                                    </div>
+                                    <span class="text-sm text-gray-500" id="dq-progress">0/0</span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Field</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dq-checks-table" class="bg-white divide-y divide-gray-200">
+                                        <!-- Content loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="hidden fixed bottom-6 right-6 w-96 h-96 bg-white rounded-lg shadow-xl border">
+        <div class="flex items-center justify-between p-4 bg-blue-600 text-white rounded-t-lg">
+            <h3 class="font-semibold">Regulatory Assistant</h3>
+            <button id="chat-close" class="text-white hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 h-72 overflow-y-auto">
+            <div class="text-sm text-gray-600 mb-4">
+                <div class="bg-gray-100 p-3 rounded-lg">
+                    Hello! I'm your regulatory assistant. Ask me about client classifications, regulation details, or system status.
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t">
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input" placeholder="Ask about regulatory processes..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="chat-send" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22,2 15,22 11,13 2,9 22,2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let classifications = [];
+        let currentClassification = null;
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const toggleButton = document.getElementById('toggle-sidebar');
+        const chatWidget = document.getElementById('chat-widget');
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatClose = document.getElementById('chat-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+        const refreshButton = document.getElementById('refresh-data');
+        const triggerDemoButton = document.getElementById('trigger-demo');
+        const clientSelectionContainer = document.getElementById('client-selection');
+        const checkCategoriesContainer = document.getElementById('check-categories');
+
+        // Sidebar functionality
+        if (toggleButton) {
+            toggleButton.addEventListener('click', () => {
+                sidebar.classList.toggle('w-64');
+                sidebar.classList.toggle('w-20');
+                document.getElementById('sidebar-title').classList.toggle('hidden');
+                document.querySelectorAll('.sidebar-text').forEach(text => {
+                    text.classList.toggle('hidden');
+                });
+            });
+        }
+
+        // Chat functionality
+        chatToggle.addEventListener('click', () => {
+            chatWidget.classList.toggle('hidden');
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWidget.classList.add('hidden');
+        });
+
+        function addChatMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-3 ${isUser ? 'text-right' : ''}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block p-3 rounded-lg max-w-xs text-sm ${
+                isUser
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : 'bg-gray-100 text-gray-800 rounded-bl-none'
+            }`;
+            bubble.textContent = message;
+
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function handleChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addChatMessage(message, true);
+            chatInput.value = '';
+
+            // Simulate AI response
+            setTimeout(() => {
+                const responses = [
+                    "Based on current regulatory data, I can help you understand compliance status for specific clients.",
+                    "The system currently monitors 20 different regulations across 3 check categories.",
+                    "Would you like me to explain the document validation process or data quality checks?",
+                    "I can provide details about specific regulatory classifications if you have a client ID.",
+                    "The high-level checks typically focus on AUM thresholds, jurisdiction eligibility, and entity type validation."
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addChatMessage(randomResponse);
+            }, 1000);
+        }
+
+        chatSend.addEventListener('click', handleChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleChatMessage();
+            }
+        });
+
+        // Utility functions
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'passed': return 'status-passed';
+                case 'failed': return 'status-failed';
+                case 'manual_review': return 'status-manual-review';
+                default: return 'status-pending';
+            }
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
+        function updateHeaderStats() {
+            const activeCount = classifications.filter(c => c.status === 'in_progress' || c.status === 'pending').length;
+            const completedCount = classifications.filter(c => c.status === 'passed').length;
+            const reviewCount = classifications.filter(c => c.status === 'manual_review').length;
+
+            document.getElementById('active-classifications').textContent = activeCount;
+            document.getElementById('completed-classifications').textContent = completedCount;
+            document.getElementById('pending-review').textContent = reviewCount;
+        }
+
+        function renderClientSelection() {
+            if (classifications.length === 0) {
+                clientSelectionContainer.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-sm border p-12 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-400 mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Regulatory Classifications</h3>
+                        <p class="text-gray-500 mb-4">Trigger a demo classification to see the regulatory due diligence process in action.</p>
+                        <button onclick="triggerDemo()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Trigger Demo Classification
+                        </button>
+                    </div>
+                `;
+                checkCategoriesContainer.classList.add('hidden');
+                return;
+            }
+
+            const options = classifications.map(c =>
+                `<option value="${c.classification_id}" ${c === currentClassification ? 'selected' : ''}>
+                    ${c.client_name} (${c.client_id}) - ${c.status}
+                 </option>`
+            ).join('');
+
+            clientSelectionContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-2 block">Select Client Classification:</label>
+                            <select id="classification-select" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-96">
+                                <option value="">-- Select a classification --</option>
+                                ${options}
+                            </select>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">Total Classifications</p>
+                            <p class="text-2xl font-bold text-gray-900">${classifications.length}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add event listener for selection change
+            document.getElementById('classification-select').addEventListener('change', (e) => {
+                const classificationId = e.target.value;
+                if (classificationId) {
+                    selectClassification(classificationId);
+                } else {
+                    checkCategoriesContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        async function selectClassification(classificationId) {
+            try {
+                const response = await fetch(`/api/regulatory/status/${classificationId}`);
+                currentClassification = await response.json();
+                renderCheckCategories();
+                checkCategoriesContainer.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading classification details:', error);
+            }
+        }
+
+        function renderCheckCategories() {
+            if (!currentClassification) return;
+
+            // High-level checks
+            const hlChecks = currentClassification.high_level_checks;
+            const hlPassed = hlChecks.filter(c => c.status === 'passed').length;
+            document.getElementById('hl-progress').textContent = `${hlPassed}/${hlChecks.length}`;
+
+            const hlTableBody = document.getElementById('hl-checks-table');
+            hlTableBody.innerHTML = hlChecks.map(check => `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-gray-900">${check.regulation_name}</td>
+                    <td class="px-4 py-3">
+                        <span class="status-badge ${getStatusBadgeClass(check.status)}">${check.status}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <button onclick="showCheckDetails('hl', '${check.check_id}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                            View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Document checks
+            const docChecks = currentClassification.document_checks;
+            const docPassed = docChecks.filter(c => c.ai_validation_status === 'passed').length;
+            document.getElementById('doc-progress').textContent = `${docPassed}/${docChecks.length}`;
+
+            const docTableBody = document.getElementById('doc-checks-table');
+            docTableBody.innerHTML = docChecks.map(check => `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-gray-900">${check.regulation_name}</td>
+                    <td class="px-4 py-3">
+                        <span class="status-badge ${getStatusBadgeClass(check.ai_validation_status)}">${check.ai_validation_status}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-sm font-medium ${check.ai_confidence > 0.85 ? 'text-green-600' : 'text-amber-600'}">
+                            ${Math.round(check.ai_confidence * 100)}%
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Data quality checks
+            const dqChecks = currentClassification.dq_checks;
+            const dqPassed = dqChecks.filter(c => c.status === 'passed').length;
+            document.getElementById('dq-progress').textContent = `${dqPassed}/${dqChecks.length}`;
+
+            const dqTableBody = document.getElementById('dq-checks-table');
+            dqTableBody.innerHTML = dqChecks.map(check => `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-gray-900">${check.field_name}</td>
+                    <td class="px-4 py-3">
+                        <span class="text-sm font-medium ${check.dq_score > 0.8 ? 'text-green-600' : 'text-red-600'}">
+                            ${Math.round(check.dq_score * 100)}%
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="status-badge ${getStatusBadgeClass(check.status)}">${check.status}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showCheckDetails(category, checkId) {
+            if (!currentClassification) return;
+
+            let check;
+            let details = '';
+
+            if (category === 'hl') {
+                check = currentClassification.high_level_checks.find(c => c.check_id === checkId);
+                details = Object.entries(check.result_data)
+                    .map(([key, value]) => `${key}: ${value ? '✅' : '❌'}`)
+                    .join(', ');
+            } else if (category === 'doc') {
+                check = currentClassification.document_checks.find(c => c.check_id === checkId);
+                details = check.ai_feedback;
+            } else if (category === 'dq') {
+                check = currentClassification.dq_checks.find(c => c.check_id === checkId);
+                details = check.issues.length ? check.issues.join(', ') : 'No issues found';
+            }
+
+            addChatMessage(`Details for ${check.regulation_name || check.field_name}: ${details}`);
+            chatWidget.classList.remove('hidden');
+        }
+
+        // API functions
+        async function loadClassifications() {
+            try {
+                const response = await fetch('/api/regulatory/list');
+                classifications = await response.json();
+                updateHeaderStats();
+                renderClientSelection();
+            } catch (error) {
+                console.error('Error loading classifications:', error);
+            }
+        }
+
+        async function triggerDemo() {
+            const demoData = {
+                client_id: `CLIENT_${Date.now()}`,
+                entity_name: `Demo Entity ${Math.floor(Math.random() * 1000)}`,
+                entity_type: 'hedge_fund',
+                jurisdiction: 'US',
+                aum_usd: 150000000,
+                business_type: 'Alternative Investment Management',
+                contact_person: 'Demo Contact',
+                email: 'demo@example.com'
+            };
+
+            try {
+                const response = await fetch('/api/regulatory/trigger', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(demoData)
+                });
+
+                const result = await response.json();
+                console.log('Demo triggered:', result);
+
+                // Refresh the list after a short delay
+                setTimeout(loadClassifications, 1000);
+
+                // Show success message
+                addChatMessage(`Demo classification triggered for ${demoData.entity_name}. Processing ${Math.floor(Math.random() * 8) + 5} regulations across 3 check categories.`);
+            } catch (error) {
+                console.error('Error triggering demo:', error);
+            }
+        }
+
+        // Event listeners
+        refreshButton.addEventListener('click', loadClassifications);
+        triggerDemoButton.addEventListener('click', triggerDemo);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClassifications();
+        });
+    </script>
+</body>
+</html>

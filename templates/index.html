@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iCLM - Intelligent Client Lifecycle Management</title>
+    <!-- 
+      NOTE: This link now points to the local Tailwind CSS file.
+      For production, it's best to use the Tailwind CLI to "purge" unused styles,
+      which can significantly reduce the file size.
+    -->
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    
+    <!-- Using system fonts for offline compatibility -->
+
+    <!-- Chart.js library loaded locally -->
+    <script src="/static/js/chart.min.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .sidebar-icon {
+            flex-shrink: 0;
+        }
+        .sidebar-text {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar bg-white w-64 flex flex-col shadow-lg">
+            <div class="flex items-center justify-start p-4 border-b h-16">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <h1 id="sidebar-title" class="text-xl font-bold ml-3 text-gray-800 sidebar-text">iCLM</h1>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a href="#" class="flex items-center px-4 py-2.5 text-white bg-blue-600 rounded-lg font-semibold shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="ml-4 sidebar-text">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                    <span class="ml-4 sidebar-text">Clients</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M20 6 9 17l-5-5"></path></svg>
+                    <span class="ml-4 sidebar-text">My Tasks</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <span class="ml-4 sidebar-text">Alerts</span>
+                </a>
+                 <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M12 20v-6M6 20v-2M18 20v-4"></path><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M6 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M18 16a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path></svg>
+                    <span class="ml-4 sidebar-text">Reports</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t mt-auto">
+                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M10.3 21.7a1.7 1.7 0 0 1-1.4 0l-4-2.5a1.7 1.7 0 0 1-1-1.5v-5a1.7 1.7 0 0 1 1-1.5l4-2.5a1.7 1.7 0 0 1 1.4 0l4 2.5a1.7 1.7 0 0 1 1 1.5v5a1.7 1.7 0 0 1-1 1.5l-4 2.5z"></path><path d="m10.3 21.7 4.1-2.5"></path><path d="M10.3 8.8 14.4 6.3"></path><path d="M3.8 14.2V9.8"></path><path d="M15 9.8l4.1-2.5"></path><path d="M15 14.2v4.5"></path><path d="M8.2 19.2v-5.5"></path></svg>
+                    <span class="ml-4 sidebar-text">Help & Support</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- Header -->
+            <header class="flex items-center justify-between pl-16 pr-8 border-b bg-white shadow-sm h-16">
+                <div>
+                     <button id="toggle-sidebar" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div class="w-1/3">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none"><path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        </span>
+                        <input type="text" class="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search for clients, funds...">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-5">
+                     <button class="text-gray-500 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <p class="font-semibold text-gray-800">Anna Vance</p>
+                            <p class="text-gray-500">Ops Specialist</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 bg-gray-100 overflow-y-auto">
+                <div class="max-w-7xl mx-auto px-8 py-8">
+
+                    <!-- KPI Tiles Row -->
+                    <div class="mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">In Progress</p>
+                                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ data.totals.in_progress }}</p>
+                                        <p class="text-xs text-blue-600 mt-1">Active onboardings</p>
+                                    </div>
+                                    <div class="bg-blue-50 p-3 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 6v6l4 2"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Pending</p>
+                                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ data.totals.pending }}</p>
+                                        <p class="text-xs text-amber-600 mt-1">Awaiting action</p>
+                                    </div>
+                                    <div class="bg-amber-50 p-3 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-600"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Completed</p>
+                                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ data.totals.completed }}</p>
+                                        <p class="text-xs text-green-600 mt-1">This month</p>
+                                    </div>
+                                    <div class="bg-green-50 p-3 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Eligible to Trade</p>
+                                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ data.totals.eligible_to_trade }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">Ready clients</p>
+                                    </div>
+                                    <div class="bg-emerald-50 p-3 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts and Action Items Row -->
+                    <div class="mb-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Onboarding Pipeline Chart -->
+                            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-6">Client Onboarding Pipeline</h2>
+                                <div class="h-96">
+                                    <canvas id="onboardingChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Action Required -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-6">Action Required</h2>
+                                <div class="space-y-4">
+                                    <div class="flex items-start p-4 bg-red-50 rounded-lg border border-red-100">
+                                        <div class="bg-red-100 p-2 rounded-full mr-3 mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-sm text-gray-900">Review missing ISDA</p>
+                                            <p class="text-xs text-gray-600">Quantum Fund Ltd.</p>
+                                            <p class="text-xs text-red-700 font-medium mt-1">Due in 2 days</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-4 bg-amber-50 rounded-lg border border-amber-100">
+                                        <div class="bg-amber-100 p-2 rounded-full mr-3 mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-600"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-sm text-gray-900">Approve SSI Setup</p>
+                                            <p class="text-xs text-gray-600">Global Investments PLC</p>
+                                            <p class="text-xs text-amber-700 font-medium mt-1">Due in 5 days</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                        <div class="bg-blue-100 p-2 rounded-full mr-3 mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path></svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-sm text-gray-900">Resolve DQ mismatch</p>
+                                            <p class="text-xs text-gray-600">Pinnacle Corp.</p>
+                                            <p class="text-xs text-gray-500 font-medium mt-1">Assigned yesterday</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">View All Tasks</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stage Breakdown Section -->
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Onboarding Stages Breakdown</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                            <!-- Regulatory Due Diligence -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="bg-indigo-50 p-3 rounded-full mr-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Regulatory</h3>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">In Progress:</span>
+                                        <span class="font-semibold text-blue-600">{{ data.stage_data.regulatory.in_progress }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Pending:</span>
+                                        <span class="font-semibold text-amber-600">{{ data.stage_data.regulatory.pending }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Completed:</span>
+                                        <span class="font-semibold text-green-600">{{ data.stage_data.regulatory.completed }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contract Setup -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="bg-purple-50 p-3 rounded-full mr-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Contracts</h3>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">In Progress:</span>
+                                        <span class="font-semibold text-blue-600">{{ data.stage_data.contracts.in_progress }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Pending:</span>
+                                        <span class="font-semibold text-amber-600">{{ data.stage_data.contracts.pending }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Completed:</span>
+                                        <span class="font-semibold text-green-600">{{ data.stage_data.contracts.completed }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Setup -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="bg-cyan-50 p-3 rounded-full mr-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-600"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Account Setup</h3>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">In Progress:</span>
+                                        <span class="font-semibold text-blue-600">{{ data.stage_data.account_setup.in_progress }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Pending:</span>
+                                        <span class="font-semibold text-amber-600">{{ data.stage_data.account_setup.pending }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Completed:</span>
+                                        <span class="font-semibold text-green-600">{{ data.stage_data.account_setup.completed }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SSI Setup -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="bg-orange-50 p-3 rounded-full mr-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-600"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">SSI Setup</h3>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">In Progress:</span>
+                                        <span class="font-semibold text-blue-600">{{ data.stage_data.ssi_setup.in_progress }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Pending:</span>
+                                        <span class="font-semibold text-amber-600">{{ data.stage_data.ssi_setup.pending }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Completed:</span>
+                                        <span class="font-semibold text-green-600">{{ data.stage_data.ssi_setup.completed }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('toggle-sidebar');
+            const sidebarTitle = document.getElementById('sidebar-title');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('w-64');
+                    sidebar.classList.toggle('w-20');
+                    sidebarTitle.classList.toggle('hidden');
+
+                    sidebarTexts.forEach(text => {
+                        text.classList.toggle('hidden');
+                    });
+                });
+            }
+
+            // Chart.js implementation for Client Onboarding Pipeline
+            const ctx = document.getElementById('onboardingChart');
+
+            if (ctx && typeof Chart !== 'undefined') {
+                // Data passed from Flask backend
+                const chartData = {
+                    regulatory: {
+                        in_progress: {{ data.stage_data.regulatory.in_progress }},
+                        pending: {{ data.stage_data.regulatory.pending }},
+                        completed: {{ data.stage_data.regulatory.completed }}
+                    },
+                    contracts: {
+                        in_progress: {{ data.stage_data.contracts.in_progress }},
+                        pending: {{ data.stage_data.contracts.pending }},
+                        completed: {{ data.stage_data.contracts.completed }}
+                    },
+                    account_setup: {
+                        in_progress: {{ data.stage_data.account_setup.in_progress }},
+                        pending: {{ data.stage_data.account_setup.pending }},
+                        completed: {{ data.stage_data.account_setup.completed }}
+                    },
+                    ssi_setup: {
+                        in_progress: {{ data.stage_data.ssi_setup.in_progress }},
+                        pending: {{ data.stage_data.ssi_setup.pending }},
+                        completed: {{ data.stage_data.ssi_setup.completed }}
+                    }
+                };
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            'Regulatory Due Diligence',
+                            'Contract Setup',
+                            'Account Setup',
+                            'SSI Setup'
+                        ],
+                        datasets: [{
+                            label: 'In Progress',
+                            data: [
+                                chartData.regulatory.in_progress,
+                                chartData.contracts.in_progress,
+                                chartData.account_setup.in_progress,
+                                chartData.ssi_setup.in_progress
+                            ],
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: 'Pending',
+                            data: [
+                                chartData.regulatory.pending,
+                                chartData.contracts.pending,
+                                chartData.account_setup.pending,
+                                chartData.ssi_setup.pending
+                            ],
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: 'Completed',
+                            data: [
+                                chartData.regulatory.completed,
+                                chartData.contracts.completed,
+                                chartData.account_setup.completed,
+                                chartData.ssi_setup.completed
+                            ],
+                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Client Onboarding Pipeline by Stage'
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: false,
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                stacked: false,
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            } else {
+                console.error('Chart.js not loaded or canvas element not found');
+            }
+        });
+    </script>
+</body>
+</html>

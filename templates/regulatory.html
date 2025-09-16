@@ -56,6 +56,49 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
         }
+        .border-3 {
+            border-width: 3px;
+        }
+        .progress-step {
+            position: relative;
+        }
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: calc(50% + 32px);
+            height: 4px;
+            width: calc(100% - 64px);
+            background: linear-gradient(90deg, transparent 0%, #e5e7eb 50%, #e5e7eb 100%);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .progress-line.active {
+            background: linear-gradient(90deg, #10b981 0%, #10b981 100%);
+        }
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.33);
+            }
+            40%, 50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.2);
+            }
+        }
+        .animate-pulse-ring::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border: 2px solid;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s ease-out infinite;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -121,7 +164,7 @@
                             </svg>
                         </div>
                         <div class="ml-3 text-sm">
-                            <p class="font-semibold text-gray-800">Anna Vance</p>
+                            <p class="font-semibold text-gray-800">John</p>
                             <p class="text-gray-500">Ops Specialist</p>
                         </div>
                     </div>
@@ -473,69 +516,105 @@
             const completedSteps = steps.filter(s => s.status === 'complete').length;
             const progressPercentage = Math.round((completedSteps / steps.length) * 100);
 
-            // Simple horizontal progress with circles and connecting line
-            const stepsHtml = steps.map((step, index) => {
-                const isComplete = step.status === 'complete';
-                const isCurrent = step.status === 'current';
-                const isLast = index === steps.length - 1;
-
-                return `
-                    <div class="flex items-center ${isLast ? '' : 'flex-1'}">
-                        <div class="flex flex-col items-center">
-                            <!-- Circle -->
-                            <div class="w-12 h-12 rounded-full border-2 flex items-center justify-center mb-3 ${
-                                isComplete ? 'bg-green-500 border-green-600' :
-                                isCurrent ? 'bg-blue-500 border-blue-600' :
-                                'bg-gray-300 border-gray-400'
-                            }">
-                                ${isComplete ?
-                                    `<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>` :
-                                    `<span class="text-white font-bold text-sm">${index + 1}</span>`
-                                }
-                            </div>
-
-                            <!-- Step name -->
-                            <div class="text-center">
-                                <p class="text-sm font-medium ${isComplete ? 'text-green-700' : isCurrent ? 'text-blue-700' : 'text-gray-600'} mb-1">
-                                    ${step.name}
-                                </p>
-                                <p class="text-xs ${isComplete ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-gray-500'}">
-                                    ${isComplete ? 'Complete' : isCurrent ? 'In Progress' : 'Pending'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Connecting line -->
-                        ${!isLast ? `
-                            <div class="flex-1 h-px mx-4 mt-[-40px] ${
-                                isComplete ? 'bg-green-500' : 'bg-gray-300'
-                            }"></div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-
             return `
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6 text-center">Regulatory Due Diligence Process</h3>
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Regulatory Due Diligence Process</h3>
+                        <p class="text-gray-600">Track progress through our 5-stage compliance workflow</p>
+                    </div>
 
-                    <!-- Simple progress steps -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                        <div class="flex items-start justify-between mb-8">
-                            ${stepsHtml}
+                    <!-- Progress Timeline with Connected Steps -->
+                    <div class="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-8 mb-6 shadow-sm">
+
+                        <!-- Connected Progress Steps -->
+                        <div class="relative mb-12">
+                            <!-- Background Progress Line -->
+                            <div class="absolute top-8 left-0 right-0 h-2 bg-gray-200 rounded-full mx-8" style="z-index: 1;"></div>
+
+                            <!-- Active Progress Line -->
+                            <div class="absolute top-8 left-0 h-2 bg-gradient-to-r from-green-500 to-green-600 rounded-full mx-8 transition-all duration-1000"
+                                 style="width: calc(${Math.max(0, (completedSteps - 1) / (steps.length - 1) * 100)}% - 32px); z-index: 2;"></div>
+
+                            <!-- Step Circles and Labels -->
+                            <div class="relative flex justify-between" style="z-index: 10;">
+                                ${steps.map((step, index) => {
+                                    const isComplete = step.status === 'complete';
+                                    const isCurrent = step.status === 'current';
+
+                                    return `
+                                        <div class="flex flex-col items-center" style="flex: 0 0 auto;">
+                                            <!-- Step Circle -->
+                                            <div class="w-16 h-16 rounded-full border-4 flex items-center justify-center shadow-lg transition-all duration-500 ${
+                                                isComplete
+                                                    ? 'bg-green-500 border-green-600 shadow-green-200'
+                                                    : isCurrent
+                                                        ? 'bg-blue-500 border-blue-600 shadow-blue-200 ring-4 ring-blue-100'
+                                                        : 'bg-white border-gray-300 shadow-gray-100'
+                                            }">
+                                                ${isComplete
+                                                    ? `<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                                       </svg>`
+                                                    : isCurrent
+                                                        ? `<div class="w-4 h-4 bg-white rounded-full animate-pulse"></div>`
+                                                        : `<span class="text-gray-500 font-bold text-lg">${index + 1}</span>`
+                                                }
+                                            </div>
+
+                                            <!-- Step Label -->
+                                            <div class="text-center mt-4 max-w-20">
+                                                <p class="text-sm font-semibold ${
+                                                    isComplete ? 'text-green-700' :
+                                                    isCurrent ? 'text-blue-700' :
+                                                    'text-gray-600'
+                                                } mb-2 leading-tight">
+                                                    ${step.name}
+                                                </p>
+                                                <span class="inline-block text-xs px-3 py-1 rounded-full font-medium ${
+                                                    isComplete ? 'text-green-700 bg-green-100' :
+                                                    isCurrent ? 'text-blue-700 bg-blue-100' :
+                                                    'text-gray-500 bg-gray-100'
+                                                }">
+                                                    ${isComplete ? '✓ Done' : isCurrent ? '⏳ Active' : '⏸ Pending'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
 
-                        <!-- Overall progress bar -->
-                        <div class="pt-4 border-t border-gray-200">
-                            <div class="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                                <span>Progress</span>
-                                <span>${progressPercentage}% Complete</span>
+                        <!-- Overall Progress Summary -->
+                        <div class="bg-white rounded-lg border border-gray-100 p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">Overall Progress</h4>
+                                    <p class="text-sm text-gray-600">${completedSteps} of ${steps.length} stages completed</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-3xl font-bold ${progressPercentage === 100 ? 'text-green-600' : 'text-blue-600'}">${progressPercentage}%</span>
+                                    <p class="text-sm text-gray-500">Complete</p>
+                                </div>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="h-3 ${progressPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'} rounded-full" style="width: ${progressPercentage}%"></div>
-                            </div>
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>${completedSteps} of ${steps.length} steps completed</span>
+
+                            <!-- Enhanced Progress Bar -->
+                            <div class="relative">
+                                <div class="w-full bg-gray-200 rounded-full h-4 shadow-inner">
+                                    <div class="h-4 rounded-full transition-all duration-700 ease-out ${
+                                        progressPercentage === 100 ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                                    }" style="width: ${progressPercentage}%"></div>
+                                </div>
+
+                                <!-- Progress Milestones -->
+                                <div class="absolute top-0 w-full h-4 flex justify-between items-center">
+                                    ${steps.map((_, index) => `
+                                        <div class="w-2 h-2 rounded-full ${
+                                            index < completedSteps ? 'bg-white' : 'bg-gray-400'
+                                        } border-2 ${
+                                            index < completedSteps ? 'border-white' : 'border-gray-300'
+                                        }" style="margin-left: ${index === 0 ? '0' : '-4px'}; margin-right: ${index === steps.length - 1 ? '0' : '-4px'};"></div>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>

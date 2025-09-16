@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulatory Due Diligence - iCLM</title>
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .sidebar-icon {
+            flex-shrink: 0;
+        }
+        .sidebar-text {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-passed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status-manual-review {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-pending {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .check-card {
+            transition: all 0.2s ease;
+        }
+        .check-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 9999px;
+            height: 0.5rem;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar bg-white w-64 flex flex-col shadow-lg">
+            <div class="flex items-center justify-start p-4 border-b h-16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <h1 id="sidebar-title" class="text-xl font-bold ml-3 text-gray-800 sidebar-text">iCLM</h1>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a href="/" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="ml-4 sidebar-text">Dashboard</span>
+                </a>
+                <a href="/regulatory" class="flex items-center px-4 py-2.5 text-white bg-blue-600 rounded-lg font-semibold shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                    <span class="ml-4 sidebar-text">Regulatory Diligence</span>
+                </a>
+                <a href="/contracts" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                    <span class="ml-4 sidebar-text">Contract Setup</span>
+                </a>
+                <a href="/accounts" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span class="ml-4 sidebar-text">Account Setup</span>
+                </a>
+                <a href="/ssi" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+                    <span class="ml-4 sidebar-text">SSI Setup</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t mt-auto">
+                <button id="chat-toggle" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-200 rounded-lg w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="ml-4 sidebar-text">Chat Assistant</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- Header -->
+            <header class="flex items-center justify-between pl-16 pr-8 border-b bg-white shadow-sm h-16">
+                <div class="flex items-center space-x-4">
+                    <button id="toggle-sidebar" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <h2 class="text-lg font-semibold text-gray-900">Regulatory Due Diligence</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="refresh-data" class="text-gray-500 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <p class="font-semibold text-gray-800">Anna Vance</p>
+                            <p class="text-gray-500">Ops Specialist</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 bg-gray-100 overflow-y-auto">
+                <div class="max-w-7xl mx-auto px-8 py-8">
+
+                    <!-- Page Header -->
+                    <div class="mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Regulatory Due Diligence</h1>
+                                    <p class="text-gray-600">Monitor and manage client regulatory classification processes across 20 regulations</p>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-blue-600" id="total-workflows">0</p>
+                                        <p class="text-sm text-gray-500">Total Workflows</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Search Section -->
+                    <div class="mb-8">
+                        <div class="bg-white rounded-xl shadow-sm border p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Client Search & Import</h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-gray-500">Connected to System X & Y</span>
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-1 relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-3 text-gray-400"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                                    <input type="text" id="client-search" placeholder="Search client by ID, name, or email..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <button id="search-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    Search
+                                </button>
+                            </div>
+                            <div id="search-results" class="mt-4 hidden">
+                                <!-- Search results will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Workflows Section -->
+                    <div id="active-workflows" class="mb-8">
+                        <div class="bg-white rounded-xl shadow-sm border p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Active Workflows</h3>
+                                <button id="refresh-workflows" class="text-gray-500 hover:text-gray-800">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+                                </button>
+                            </div>
+                            <div id="workflows-list">
+                                <div class="text-center py-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-400 mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-2">No Active Workflows</h4>
+                                    <p class="text-gray-500">Search for a client above to start a new regulatory workflow</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Detail View -->
+                    <div id="workflow-detail" class="hidden">
+                        <!-- Workflow steps and progress will be shown here -->
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="hidden fixed bottom-6 right-6 w-96 h-96 bg-white rounded-lg shadow-xl border">
+        <div class="flex items-center justify-between p-4 bg-blue-600 text-white rounded-t-lg">
+            <h3 class="font-semibold">Regulatory Assistant</h3>
+            <button id="chat-close" class="text-white hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 h-72 overflow-y-auto">
+            <div class="text-sm text-gray-600 mb-4">
+                <div class="bg-gray-100 p-3 rounded-lg">
+                    Hello! I'm your regulatory assistant. Ask me about client classifications, regulation details, or system status.
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t">
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input" placeholder="Ask about regulatory processes..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="chat-send" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22,2 15,22 11,13 2,9 22,2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let activeWorkflows = [];
+        let currentWorkflow = null;
+        let searchResults = [];
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const toggleButton = document.getElementById('toggle-sidebar');
+        const chatWidget = document.getElementById('chat-widget');
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatClose = document.getElementById('chat-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+        const refreshButton = document.getElementById('refresh-data');
+        const triggerDemoButton = document.getElementById('trigger-demo');
+        const clientSearchInput = document.getElementById('client-search');
+        const searchButton = document.getElementById('search-btn');
+        const searchResultsContainer = document.getElementById('search-results');
+        const workflowsListContainer = document.getElementById('workflows-list');
+        const workflowDetailContainer = document.getElementById('workflow-detail');
+        const refreshWorkflowsButton = document.getElementById('refresh-workflows');
+
+        // Sidebar functionality
+        if (toggleButton) {
+            toggleButton.addEventListener('click', () => {
+                sidebar.classList.toggle('w-64');
+                sidebar.classList.toggle('w-20');
+                document.getElementById('sidebar-title').classList.toggle('hidden');
+                document.querySelectorAll('.sidebar-text').forEach(text => {
+                    text.classList.toggle('hidden');
+                });
+            });
+        }
+
+        // Chat functionality
+        chatToggle.addEventListener('click', () => {
+            chatWidget.classList.toggle('hidden');
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWidget.classList.add('hidden');
+        });
+
+        function addChatMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-3 ${isUser ? 'text-right' : ''}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block p-3 rounded-lg max-w-xs text-sm ${
+                isUser
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : 'bg-gray-100 text-gray-800 rounded-bl-none'
+            }`;
+            bubble.textContent = message;
+
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function handleChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addChatMessage(message, true);
+            chatInput.value = '';
+
+            // Simulate AI response
+            setTimeout(() => {
+                const responses = [
+                    "Based on current regulatory data, I can help you understand compliance status for specific clients.",
+                    "The system currently monitors 20 different regulations across 3 check categories.",
+                    "Would you like me to explain the document validation process or data quality checks?",
+                    "I can provide details about specific regulatory classifications if you have a client ID.",
+                    "The high-level checks typically focus on AUM thresholds, jurisdiction eligibility, and entity type validation."
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addChatMessage(randomResponse);
+            }, 1000);
+        }
+
+        chatSend.addEventListener('click', handleChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleChatMessage();
+            }
+        });
+
+        // Utility functions
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'passed': return 'status-passed';
+                case 'failed': return 'status-failed';
+                case 'manual_review': return 'status-manual-review';
+                default: return 'status-pending';
+            }
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString();
+        }
+
+        function updateHeaderStats() {
+            document.getElementById('total-workflows').textContent = activeWorkflows.length;
+        }
+
+        function renderSearchResults(results) {
+            if (!results || results.length === 0) {
+                searchResultsContainer.innerHTML = `
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <p class="text-gray-500">No clients found matching your search criteria</p>
+                    </div>
+                `;
+                searchResultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            const resultsHtml = results.map(client => `
+                <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="selectClient('${client.client_id}')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">${client.entity_name}</h4>
+                            <p class="text-sm text-gray-600">ID: ${client.client_id} | ${client.entity_type} | ${client.jurisdiction}</p>
+                            <p class="text-xs text-gray-500">AUM: $${(client.aum_usd / 1000000).toFixed(1)}M</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="selectClient('${client.client_id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                                Start Workflow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            searchResultsContainer.innerHTML = `
+                <div class="space-y-3">
+                    <h4 class="font-medium text-gray-900">Search Results (${results.length})</h4>
+                    ${resultsHtml}
+                </div>
+            `;
+            searchResultsContainer.classList.remove('hidden');
+        }
+
+        async function selectClient(clientId) {
+            try {
+                // Search for the client to get their data
+                const clientResponse = await fetch(`/api/regulatory/search_client/${clientId}`);
+                const clientData = await clientResponse.json();
+
+                // Create a new workflow for this client
+                const workflowResponse = await fetch('/api/regulatory/workflow/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ client_id: clientId })
+                });
+
+                const workflow = await workflowResponse.json();
+                addChatMessage(`Started regulatory workflow for ${clientData.entity_name}. Processing ${workflow.applicable_regulations.length} regulations.`);
+
+                // Refresh workflows list
+                await loadWorkflows();
+
+                // Clear search results
+                searchResultsContainer.classList.add('hidden');
+                clientSearchInput.value = '';
+
+            } catch (error) {
+                console.error('Error creating workflow:', error);
+                addChatMessage('Error creating workflow. Please try again.');
+            }
+        }
+
+        function renderWorkflows() {
+            if (activeWorkflows.length === 0) {
+                workflowsListContainer.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-400 mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Active Workflows</h4>
+                        <p class="text-gray-500">Search for a client above to start a new regulatory workflow</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const workflowsHtml = activeWorkflows.map(workflow => {
+                const progress = getWorkflowProgress(workflow);
+                const statusClass = getWorkflowStatusClass(workflow.overall_status);
+
+                return `
+                    <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="selectWorkflow('${workflow.workflow_id}')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="font-semibold text-gray-900">${workflow.client_data?.entity_name || workflow.client_id}</h4>
+                                    <span class="status-badge ${statusClass}">${workflow.overall_status.replace('_', ' ')}</span>
+                                </div>
+                                <p class="text-sm text-gray-600">ID: ${workflow.client_id} | ${workflow.applicable_regulations.length} regulations</p>
+                                <div class="mt-2">
+                                    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                        <span>Progress</span>
+                                        <span>${progress.completed}/${progress.total} steps</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="progress-bar h-2" style="width: ${(progress.completed / progress.total) * 100}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-4 text-right">
+                                <p class="text-xs text-gray-500">Created</p>
+                                <p class="text-sm font-medium">${formatDateTime(workflow.created_at)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            workflowsListContainer.innerHTML = workflowsHtml;
+        }
+
+        function getWorkflowProgress(workflow) {
+            const steps = Object.values(workflow.workflow_steps);
+            const completed = steps.filter(step => step.status === 'completed').length;
+            return { completed, total: steps.length };
+        }
+
+        function getWorkflowStatusClass(status) {
+            switch (status) {
+                case 'completed': return 'status-passed';
+                case 'failed': return 'status-failed';
+                case 'manual_review': return 'status-manual-review';
+                default: return 'status-pending';
+            }
+        }
+
+        // API functions
+        async function searchClients() {
+            const query = clientSearchInput.value.trim();
+            if (!query) return;
+
+            try {
+                // For demo purposes, search our sample clients
+                const sampleClients = [
+                    { client_id: 'CLIENT_001', entity_name: 'Alpha Capital Management', entity_type: 'hedge_fund', jurisdiction: 'US', aum_usd: 250000000 },
+                    { client_id: 'CLIENT_002', entity_name: 'Beta Investment Advisors', entity_type: 'investment_advisor', jurisdiction: 'EU', aum_usd: 120000000 },
+                    { client_id: 'CLIENT_003', entity_name: 'Gamma Asset Management', entity_type: 'asset_manager', jurisdiction: 'UK', aum_usd: 500000000 }
+                ];
+
+                const results = sampleClients.filter(client =>
+                    client.client_id.toLowerCase().includes(query.toLowerCase()) ||
+                    client.entity_name.toLowerCase().includes(query.toLowerCase())
+                );
+
+                searchResults = results;
+                renderSearchResults(results);
+            } catch (error) {
+                console.error('Error searching clients:', error);
+            }
+        }
+
+        async function loadWorkflows() {
+            try {
+                const response = await fetch('/api/regulatory/workflows');
+                activeWorkflows = await response.json();
+                updateHeaderStats();
+                renderWorkflows();
+            } catch (error) {
+                console.error('Error loading workflows:', error);
+            }
+        }
+
+        async function selectWorkflow(workflowId) {
+            try {
+                const response = await fetch(`/api/regulatory/workflow/${workflowId}`);
+                currentWorkflow = await response.json();
+                renderWorkflowDetail();
+                workflowDetailContainer.classList.remove('hidden');
+
+                // Scroll to workflow detail
+                workflowDetailContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error loading workflow details:', error);
+            }
+        }
+
+        function renderWorkflowDetail() {
+            if (!currentWorkflow) return;
+
+            const steps = [
+                { key: 'client_import', name: 'Client Import', icon: '📥' },
+                { key: 'regulation_classification', name: 'Regulation Classification', icon: '⚖️' },
+                { key: 'document_validation', name: 'Document Validation', icon: '📄' },
+                { key: 'manual_review', name: 'Manual Review', icon: '👥' },
+                { key: 'client_communication', name: 'Client Communication', icon: '📧' }
+            ];
+
+            const stepsHtml = steps.map((step, index) => {
+                const workflowStep = currentWorkflow.workflow_steps[step.key];
+                const statusClass = getWorkflowStatusClass(workflowStep.status);
+                const isActive = workflowStep.status === 'in_progress';
+                const canExecute = workflowStep.status === 'pending' && (index === 0 || steps[index - 1] && currentWorkflow.workflow_steps[steps[index - 1].key].status === 'completed');
+
+                return `
+                    <div class="flex items-center space-x-4 p-6 bg-white rounded-lg border ${isActive ? 'ring-2 ring-blue-500' : ''}">
+                        <div class="text-3xl">${step.icon}</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${step.name}</h4>
+                            <p class="text-sm text-gray-600">${workflowStep.description || 'Processing step...'}</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="status-badge ${statusClass}">${workflowStep.status.replace('_', ' ')}</span>
+                                ${workflowStep.started_at ? `<span class="text-xs text-gray-500">Started: ${formatDateTime(workflowStep.started_at)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            ${canExecute ? `<button onclick="executeWorkflowStep('${currentWorkflow.workflow_id}', '${step.key}')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Execute</button>` : ''}
+                            ${workflowStep.status === 'completed' ? `<button onclick="viewStepResults('${step.key}')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-300">View Results</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            workflowDetailContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">${currentWorkflow.client_data?.entity_name || currentWorkflow.client_id}</h3>
+                            <p class="text-gray-600">Workflow ID: ${currentWorkflow.workflow_id}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <span class="status-badge ${getWorkflowStatusClass(currentWorkflow.overall_status)}">${currentWorkflow.overall_status.replace('_', ' ')}</span>
+                            <button onclick="closeWorkflowDetail()" class="text-gray-500 hover:text-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-gray-900">Workflow Steps</h4>
+                        <div class="space-y-3">
+                            ${stepsHtml}
+                        </div>
+                    </div>
+
+                    ${currentWorkflow.applicable_regulations.length > 0 ? `
+                        <div class="mt-6 pt-6 border-t">
+                            <h4 class="font-medium text-gray-900 mb-3">Applicable Regulations (${currentWorkflow.applicable_regulations.length})</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${currentWorkflow.applicable_regulations.map(reg => `<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${reg}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function closeWorkflowDetail() {
+            workflowDetailContainer.classList.add('hidden');
+            currentWorkflow = null;
+        }
+
+        async function executeWorkflowStep(workflowId, stepName) {
+            try {
+                const response = await fetch(`/api/regulatory/workflow/${workflowId}/step/${stepName}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                addChatMessage(`Executing ${stepName.replace('_', ' ')} for workflow ${workflowId}...`);
+
+                // Refresh workflow details
+                setTimeout(() => {
+                    selectWorkflow(workflowId);
+                    loadWorkflows(); // Refresh the list too
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error executing workflow step:', error);
+                addChatMessage('Error executing workflow step. Please try again.');
+            }
+        }
+
+        function viewStepResults(stepName) {
+            if (!currentWorkflow) return;
+
+            const step = currentWorkflow.workflow_steps[stepName];
+            const resultText = step.result ? JSON.stringify(step.result, null, 2) : 'No detailed results available';
+
+            addChatMessage(`Results for ${stepName.replace('_', ' ')}: ${step.description || 'Step completed successfully'}`);
+            if (step.result && step.result.summary) {
+                addChatMessage(`Summary: ${step.result.summary}`);
+            }
+            chatWidget.classList.remove('hidden');
+        }
+
+        // Event listeners
+        refreshButton.addEventListener('click', loadWorkflows);
+        triggerDemoButton.addEventListener('click', () => {
+            // Trigger demo by searching for CLIENT_001
+            clientSearchInput.value = 'CLIENT_001';
+            searchClients();
+        });
+
+        searchButton.addEventListener('click', searchClients);
+        clientSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchClients();
+            }
+        });
+
+        refreshWorkflowsButton.addEventListener('click', loadWorkflows);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWorkflows();
+        });
+    </script>
+</body>
+</html>

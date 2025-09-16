@@ -14,6 +14,15 @@ app = Flask(__name__)
 # Data Models for Regulatory System
 # ===============================
 
+class WorkflowStatus(Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class CheckStatus(Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
@@ -30,6 +39,13 @@ class EntityType(Enum):
     CORPORATE = "corporate"
 
 @dataclass
+class ProductApproval:
+    product_name: str
+    product_type: str
+    approved_date: datetime
+    risk_level: str
+
+@dataclass
 class ClientData:
     client_id: str
     entity_name: str
@@ -39,6 +55,7 @@ class ClientData:
     business_type: str
     contact_person: str
     email: str
+    approved_products: List[ProductApproval]
     created_at: datetime
 
 @dataclass
@@ -77,6 +94,52 @@ class DataQualityCheck:
     completed_at: Optional[datetime] = None
 
 @dataclass
+class DocumentRequirement:
+    document_type: str
+    required: bool
+    description: str
+
+@dataclass
+class RegulationRule:
+    regulation_name: str
+    conditions: Dict
+    required_documents: List[DocumentRequirement]
+    description: str
+
+@dataclass
+class WorkflowStep:
+    step_name: str
+    status: WorkflowStatus
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    details: Dict
+    error_message: Optional[str] = None
+
+@dataclass
+class ClientCommunication:
+    comm_id: str
+    client_id: str
+    comm_type: str
+    subject: str
+    content: str
+    status: WorkflowStatus
+    sent_at: Optional[datetime]
+    created_at: datetime
+
+@dataclass
+class RegulatoryWorkflow:
+    workflow_id: str
+    client_id: str
+    client_data: Optional[ClientData]
+    applicable_regulations: List[str]
+    workflow_steps: Dict[str, WorkflowStep]  # step_name -> WorkflowStep
+    classification_results: Optional['RegulatoryClassification']
+    communications: List[ClientCommunication]
+    overall_status: WorkflowStatus
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+
+@dataclass
 class RegulatoryClassification:
     client_id: str
     classification_id: str
@@ -95,14 +158,133 @@ class RegulatoryClassification:
 # In-memory storage for demo purposes
 clients_db: Dict[str, ClientData] = {}
 regulatory_db: Dict[str, RegulatoryClassification] = {}
+workflow_db: Dict[str, RegulatoryWorkflow] = {}
 
-# Sample regulations for demo
-REGULATIONS = [
-    "MiFID II", "AIFMD", "UCITS", "CRD IV", "Solvency II",
-    "FATCA", "CRS", "AML/KYC", "GDPR", "Basel III",
-    "EMIR", "SFDR", "PRIIPs", "MAR", "BMR",
-    "CASS", "CSDR", "Settlement Finality", "Market Abuse", "Prospectus"
+# Regulation Classification Rules Engine
+REGULATION_RULES = [
+    RegulationRule(
+        regulation_name="MiFID II",
+        conditions={
+            "jurisdiction": ["EU", "UK"],
+            "products": ["derivatives", "equities", "bonds"],
+            "entity_types": ["investment_advisor", "hedge_fund"],
+            "aum_threshold": 5000000
+        },
+        required_documents=[
+            DocumentRequirement("risk_disclosure", True, "Risk disclosure statement for MiFID II compliance"),
+            DocumentRequirement("entity_registration", True, "Entity registration certificate"),
+            DocumentRequirement("financial_statements", True, "Latest audited financial statements")
+        ],
+        description="Markets in Financial Instruments Directive II"
+    ),
+    RegulationRule(
+        regulation_name="AIFMD",
+        conditions={
+            "jurisdiction": ["EU"],
+            "products": ["alternative_investments", "hedge_funds"],
+            "entity_types": ["hedge_fund", "investment_advisor"],
+            "aum_threshold": 100000000
+        },
+        required_documents=[
+            DocumentRequirement("aifmd_registration", True, "AIFMD registration documentation"),
+            DocumentRequirement("fund_prospectus", True, "Fund prospectus and offering documents"),
+            DocumentRequirement("risk_management", True, "Risk management framework documentation")
+        ],
+        description="Alternative Investment Fund Managers Directive"
+    ),
+    RegulationRule(
+        regulation_name="EMIR",
+        conditions={
+            "jurisdiction": ["EU", "UK"],
+            "products": ["derivatives", "swaps"],
+            "entity_types": ["hedge_fund", "investment_advisor", "bank"],
+            "aum_threshold": 0
+        },
+        required_documents=[
+            DocumentRequirement("emir_registration", True, "EMIR registration and reporting documentation"),
+            DocumentRequirement("derivative_policy", True, "Derivatives trading policy"),
+            DocumentRequirement("risk_mitigation", True, "Risk mitigation procedures for OTC derivatives")
+        ],
+        description="European Market Infrastructure Regulation"
+    ),
+    RegulationRule(
+        regulation_name="FATCA",
+        conditions={
+            "jurisdiction": ["US", "GLOBAL"],
+            "entity_types": ["hedge_fund", "investment_advisor", "pension_fund", "insurance_company"],
+            "aum_threshold": 0
+        },
+        required_documents=[
+            DocumentRequirement("fatca_forms", True, "FATCA compliance forms (W-8 series)"),
+            DocumentRequirement("us_person_identification", True, "US person identification procedures"),
+            DocumentRequirement("irs_registration", False, "IRS registration documentation")
+        ],
+        description="Foreign Account Tax Compliance Act"
+    ),
+    RegulationRule(
+        regulation_name="AML/KYC",
+        conditions={
+            "jurisdiction": ["GLOBAL"],
+            "entity_types": ["hedge_fund", "investment_advisor", "bank", "corporate", "pension_fund", "insurance_company"],
+            "aum_threshold": 0
+        },
+        required_documents=[
+            DocumentRequirement("aml_policy", True, "Anti-Money Laundering policy and procedures"),
+            DocumentRequirement("kyc_documentation", True, "Know Your Customer documentation"),
+            DocumentRequirement("beneficial_ownership", True, "Beneficial ownership disclosure"),
+            DocumentRequirement("sanctions_screening", True, "Sanctions screening procedures")
+        ],
+        description="Anti-Money Laundering / Know Your Customer"
+    )
 ]
+
+# Sample client data for demo (System X data)
+SAMPLE_CLIENTS = {
+    "CLIENT_001": {
+        "entity_name": "European Alpha Fund",
+        "entity_type": "hedge_fund",
+        "jurisdiction": "EU",
+        "aum_usd": 250000000,
+        "business_type": "Alternative Investment Management",
+        "contact_person": "Maria Schmidt",
+        "email": "maria.schmidt@europealpha.com"
+    },
+    "CLIENT_002": {
+        "entity_name": "Global Investment Advisors Ltd",
+        "entity_type": "investment_advisor",
+        "jurisdiction": "UK",
+        "aum_usd": 75000000,
+        "business_type": "Investment Advisory Services",
+        "contact_person": "James Wilson",
+        "email": "j.wilson@globalinvest.co.uk"
+    },
+    "CLIENT_003": {
+        "entity_name": "US Pension Fund",
+        "entity_type": "pension_fund",
+        "jurisdiction": "US",
+        "aum_usd": 500000000,
+        "business_type": "Pension Fund Management",
+        "contact_person": "Sarah Johnson",
+        "email": "sarah.j@uspension.org"
+    }
+}
+
+# Sample product approvals (System Y data)
+SAMPLE_PRODUCTS = {
+    "CLIENT_001": [
+        {"product_name": "Equity Derivatives", "product_type": "derivatives", "risk_level": "high"},
+        {"product_name": "European Equities", "product_type": "equities", "risk_level": "medium"},
+        {"product_name": "Alternative Investments", "product_type": "alternative_investments", "risk_level": "high"}
+    ],
+    "CLIENT_002": [
+        {"product_name": "Corporate Bonds", "product_type": "bonds", "risk_level": "low"},
+        {"product_name": "Equity Trading", "product_type": "equities", "risk_level": "medium"}
+    ],
+    "CLIENT_003": [
+        {"product_name": "Government Bonds", "product_type": "bonds", "risk_level": "low"},
+        {"product_name": "Money Market", "product_type": "money_market", "risk_level": "low"}
+    ]
+}
 
 # Mock data for client onboarding requests
 def generate_mock_data():
@@ -201,6 +383,300 @@ def regulatory_page():
     Renders the regulatory due diligence page.
     """
     return render_template('regulatory.html')
+
+# Contract setup page
+@app.route('/contracts')
+def contracts_page():
+    """
+    Renders the contract setup page.
+    """
+    return render_template('contracts.html')
+
+# Account setup page
+@app.route('/accounts')
+def accounts_page():
+    """
+    Renders the account setup page.
+    """
+    return render_template('accounts.html')
+
+# SSI setup page
+@app.route('/ssi')
+def ssi_page():
+    """
+    Renders the SSI setup page.
+    """
+    return render_template('ssi.html')
+
+# ===============================
+# New Regulatory Workflow Engine
+# ===============================
+
+def import_client_data(client_id: str) -> ClientData:
+    """Simulate importing client data from System X and System Y"""
+    if client_id not in SAMPLE_CLIENTS:
+        raise ValueError(f"Client {client_id} not found in System X")
+
+    client_info = SAMPLE_CLIENTS[client_id]
+    products_info = SAMPLE_PRODUCTS.get(client_id, [])
+
+    # Convert to ProductApproval objects
+    approved_products = [
+        ProductApproval(
+            product_name=p["product_name"],
+            product_type=p["product_type"],
+            approved_date=datetime.now() - timedelta(days=random.randint(30, 365)),
+            risk_level=p["risk_level"]
+        ) for p in products_info
+    ]
+
+    return ClientData(
+        client_id=client_id,
+        entity_name=client_info["entity_name"],
+        entity_type=EntityType(client_info["entity_type"]),
+        jurisdiction=client_info["jurisdiction"],
+        aum_usd=client_info["aum_usd"],
+        business_type=client_info["business_type"],
+        contact_person=client_info["contact_person"],
+        email=client_info["email"],
+        approved_products=approved_products,
+        created_at=datetime.now()
+    )
+
+def classify_applicable_regulations(client_data: ClientData) -> List[str]:
+    """Rule-based regulation classification based on client profile and products"""
+    applicable_regulations = []
+
+    client_product_types = [p.product_type for p in client_data.approved_products]
+
+    for rule in REGULATION_RULES:
+        is_applicable = True
+        conditions = rule.conditions
+
+        # Check jurisdiction
+        if "jurisdiction" in conditions:
+            if client_data.jurisdiction not in conditions["jurisdiction"] and "GLOBAL" not in conditions["jurisdiction"]:
+                is_applicable = False
+
+        # Check entity type
+        if "entity_types" in conditions and is_applicable:
+            if client_data.entity_type.value not in conditions["entity_types"]:
+                is_applicable = False
+
+        # Check AUM threshold
+        if "aum_threshold" in conditions and is_applicable:
+            if client_data.aum_usd < conditions["aum_threshold"]:
+                is_applicable = False
+
+        # Check product types
+        if "products" in conditions and is_applicable:
+            has_matching_product = any(product_type in client_product_types for product_type in conditions["products"])
+            if not has_matching_product:
+                is_applicable = False
+
+        if is_applicable:
+            applicable_regulations.append(rule.regulation_name)
+
+    return applicable_regulations
+
+def check_document_completeness(client_id: str, regulation_name: str) -> Dict:
+    """Simulate checking document completeness from contract management system"""
+    time.sleep(random.uniform(0.2, 0.8))  # Simulate API delay
+
+    # Find the regulation rule
+    rule = next((r for r in REGULATION_RULES if r.regulation_name == regulation_name), None)
+    if not rule:
+        return {"error": f"No rule found for {regulation_name}"}
+
+    document_results = {}
+    overall_complete = True
+
+    for doc_req in rule.required_documents:
+        # Simulate document availability (80% chance of being available)
+        is_available = random.random() > 0.2
+
+        if doc_req.required and not is_available:
+            overall_complete = False
+
+        document_results[doc_req.document_type] = {
+            "required": doc_req.required,
+            "available": is_available,
+            "description": doc_req.description,
+            "status": "complete" if is_available else ("missing" if doc_req.required else "optional_missing")
+        }
+
+    return {
+        "regulation": regulation_name,
+        "overall_complete": overall_complete,
+        "documents": document_results,
+        "checked_at": datetime.now().isoformat()
+    }
+
+def create_regulatory_workflow(client_id: str) -> RegulatoryWorkflow:
+    """Create a new regulatory workflow for a client"""
+    workflow_id = str(uuid.uuid4())
+
+    # Initialize workflow steps
+    workflow_steps = {
+        "client_import": WorkflowStep(
+            step_name="Client Data Import",
+            status=WorkflowStatus.NOT_STARTED,
+            started_at=None,
+            completed_at=None,
+            details={}
+        ),
+        "regulation_classification": WorkflowStep(
+            step_name="Regulation Classification",
+            status=WorkflowStatus.NOT_STARTED,
+            started_at=None,
+            completed_at=None,
+            details={}
+        ),
+        "document_validation": WorkflowStep(
+            step_name="Document Validation",
+            status=WorkflowStatus.NOT_STARTED,
+            started_at=None,
+            completed_at=None,
+            details={}
+        ),
+        "manual_review": WorkflowStep(
+            step_name="Manual Review",
+            status=WorkflowStatus.NOT_STARTED,
+            started_at=None,
+            completed_at=None,
+            details={}
+        ),
+        "client_communication": WorkflowStep(
+            step_name="Client Communication",
+            status=WorkflowStatus.NOT_STARTED,
+            started_at=None,
+            completed_at=None,
+            details={}
+        )
+    }
+
+    workflow = RegulatoryWorkflow(
+        workflow_id=workflow_id,
+        client_id=client_id,
+        client_data=None,
+        applicable_regulations=[],
+        workflow_steps=workflow_steps,
+        classification_results=None,
+        communications=[],
+        overall_status=WorkflowStatus.NOT_STARTED,
+        created_at=datetime.now()
+    )
+
+    workflow_db[workflow_id] = workflow
+    return workflow
+
+def process_workflow_step(workflow_id: str, step_name: str) -> bool:
+    """Process a specific workflow step"""
+    if workflow_id not in workflow_db:
+        return False
+
+    workflow = workflow_db[workflow_id]
+    step = workflow.workflow_steps[step_name]
+
+    step.started_at = datetime.now()
+    step.status = WorkflowStatus.IN_PROGRESS
+
+    try:
+        if step_name == "client_import":
+            # Import client data from systems X and Y
+            workflow.client_data = import_client_data(workflow.client_id)
+            step.details = {
+                "system_x_data": "imported",
+                "system_y_data": "imported",
+                "products_count": len(workflow.client_data.approved_products)
+            }
+
+        elif step_name == "regulation_classification":
+            # Classify applicable regulations
+            workflow.applicable_regulations = classify_applicable_regulations(workflow.client_data)
+            step.details = {
+                "total_regulations_checked": len(REGULATION_RULES),
+                "applicable_regulations": workflow.applicable_regulations,
+                "classification_basis": "automated_rules_engine"
+            }
+
+        elif step_name == "document_validation":
+            # Check document completeness for each regulation
+            doc_results = {}
+            overall_complete = True
+
+            for regulation in workflow.applicable_regulations:
+                result = check_document_completeness(workflow.client_id, regulation)
+                doc_results[regulation] = result
+                if not result.get("overall_complete", False):
+                    overall_complete = False
+
+            step.details = {
+                "regulations_checked": len(workflow.applicable_regulations),
+                "document_results": doc_results,
+                "overall_complete": overall_complete
+            }
+
+            # If documents incomplete, require manual review
+            if not overall_complete:
+                step.status = WorkflowStatus.MANUAL_REVIEW_REQUIRED
+                workflow.workflow_steps["manual_review"].status = WorkflowStatus.PENDING
+
+        elif step_name == "manual_review":
+            # Simulate manual review process
+            time.sleep(random.uniform(1.0, 2.0))
+
+            # 90% chance of approval
+            approved = random.random() > 0.1
+            step.details = {
+                "reviewer": "Anna Vance",
+                "review_decision": "approved" if approved else "rejected",
+                "review_comments": "All regulatory requirements satisfied" if approved else "Missing critical documentation",
+                "review_duration_minutes": random.randint(15, 45)
+            }
+
+            if approved:
+                step.status = WorkflowStatus.APPROVED
+            else:
+                step.status = WorkflowStatus.REJECTED
+                workflow.overall_status = WorkflowStatus.REJECTED
+                return True
+
+        elif step_name == "client_communication":
+            # Generate and send client communication
+            comm_id = str(uuid.uuid4())
+
+            regulation_list = ", ".join(workflow.applicable_regulations)
+            communication = ClientCommunication(
+                comm_id=comm_id,
+                client_id=workflow.client_id,
+                comm_type="market_regulation_notification",
+                subject=f"Regulatory Due Diligence Complete - {workflow.client_data.entity_name}",
+                content=f"Dear {workflow.client_data.contact_person},\n\nWe have completed the regulatory due diligence for {workflow.client_data.entity_name}. Based on your entity profile and approved products, the following regulations are applicable: {regulation_list}.\n\nYour account is now eligible for trading activities.\n\nBest regards,\nRegulatory Team",
+                status=WorkflowStatus.COMPLETED,
+                sent_at=datetime.now(),
+                created_at=datetime.now()
+            )
+
+            workflow.communications.append(communication)
+            step.details = {
+                "communication_type": "market_regulation_notification",
+                "sent_to": workflow.client_data.email,
+                "regulations_notified": workflow.applicable_regulations
+            }
+
+        # Complete the step
+        if step.status not in [WorkflowStatus.MANUAL_REVIEW_REQUIRED, WorkflowStatus.REJECTED]:
+            step.status = WorkflowStatus.COMPLETED
+        step.completed_at = datetime.now()
+
+        return True
+
+    except Exception as e:
+        step.status = WorkflowStatus.FAILED
+        step.error_message = str(e)
+        step.completed_at = datetime.now()
+        return False
 
 # ===============================
 # Mock APIs for External Systems
@@ -546,6 +1022,163 @@ def list_regulatory_classifications():
         })
 
     return jsonify(classifications)
+
+# ===============================
+# New Workflow API Endpoints
+# ===============================
+
+@app.route('/api/regulatory/search_client/<client_id>')
+def search_client(client_id):
+    """Search for client in System X and preview data"""
+    try:
+        if client_id not in SAMPLE_CLIENTS:
+            return jsonify({'error': 'Client not found in System X'}), 404
+
+        client_info = SAMPLE_CLIENTS[client_id]
+        products_info = SAMPLE_PRODUCTS.get(client_id, [])
+
+        return jsonify({
+            'client_id': client_id,
+            'system_x_data': client_info,
+            'system_y_data': {
+                'products': products_info,
+                'product_count': len(products_info)
+            },
+            'found': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/regulatory/workflow/create', methods=['POST'])
+def create_workflow():
+    """Create a new regulatory workflow for a client"""
+    data = request.json
+    client_id = data.get('client_id')
+
+    if not client_id:
+        return jsonify({'error': 'client_id is required'}), 400
+
+    try:
+        workflow = create_regulatory_workflow(client_id)
+        return jsonify({
+            'status': 'success',
+            'workflow_id': workflow.workflow_id,
+            'client_id': workflow.client_id,
+            'steps': list(workflow.workflow_steps.keys()),
+            'message': f'Workflow created for client {client_id}'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/regulatory/workflow/<workflow_id>/step/<step_name>', methods=['POST'])
+def process_step(workflow_id, step_name):
+    """Process a specific workflow step"""
+    try:
+        success = process_workflow_step(workflow_id, step_name)
+        if success:
+            workflow = workflow_db[workflow_id]
+            step = workflow.workflow_steps[step_name]
+
+            return jsonify({
+                'status': 'success',
+                'step_name': step_name,
+                'step_status': step.status.value,
+                'step_details': step.details,
+                'started_at': step.started_at.isoformat() if step.started_at else None,
+                'completed_at': step.completed_at.isoformat() if step.completed_at else None,
+                'error_message': step.error_message
+            })
+        else:
+            return jsonify({'error': 'Failed to process step'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/regulatory/workflow/<workflow_id>')
+def get_workflow_status(workflow_id):
+    """Get complete workflow status"""
+    if workflow_id not in workflow_db:
+        return jsonify({'error': 'Workflow not found'}), 404
+
+    workflow = workflow_db[workflow_id]
+
+    # Convert workflow to serializable format
+    def convert_step_to_dict(step):
+        return {
+            'step_name': step.step_name,
+            'status': step.status.value,
+            'started_at': step.started_at.isoformat() if step.started_at else None,
+            'completed_at': step.completed_at.isoformat() if step.completed_at else None,
+            'details': step.details,
+            'error_message': step.error_message
+        }
+
+    def convert_comm_to_dict(comm):
+        return {
+            'comm_id': comm.comm_id,
+            'comm_type': comm.comm_type,
+            'subject': comm.subject,
+            'content': comm.content,
+            'status': comm.status.value,
+            'sent_at': comm.sent_at.isoformat() if comm.sent_at else None,
+            'created_at': comm.created_at.isoformat()
+        }
+
+    client_data_dict = None
+    if workflow.client_data:
+        client_data_dict = {
+            'client_id': workflow.client_data.client_id,
+            'entity_name': workflow.client_data.entity_name,
+            'entity_type': workflow.client_data.entity_type.value,
+            'jurisdiction': workflow.client_data.jurisdiction,
+            'aum_usd': workflow.client_data.aum_usd,
+            'business_type': workflow.client_data.business_type,
+            'contact_person': workflow.client_data.contact_person,
+            'email': workflow.client_data.email,
+            'approved_products': [
+                {
+                    'product_name': p.product_name,
+                    'product_type': p.product_type,
+                    'approved_date': p.approved_date.isoformat(),
+                    'risk_level': p.risk_level
+                } for p in workflow.client_data.approved_products
+            ]
+        }
+
+    return jsonify({
+        'workflow_id': workflow.workflow_id,
+        'client_id': workflow.client_id,
+        'client_data': client_data_dict,
+        'applicable_regulations': workflow.applicable_regulations,
+        'workflow_steps': {name: convert_step_to_dict(step) for name, step in workflow.workflow_steps.items()},
+        'communications': [convert_comm_to_dict(comm) for comm in workflow.communications],
+        'overall_status': workflow.overall_status.value,
+        'created_at': workflow.created_at.isoformat(),
+        'completed_at': workflow.completed_at.isoformat() if workflow.completed_at else None
+    })
+
+@app.route('/api/regulatory/workflows')
+def list_workflows():
+    """List all regulatory workflows"""
+    workflows = []
+    for workflow in workflow_db.values():
+        # Calculate progress
+        total_steps = len(workflow.workflow_steps)
+        completed_steps = sum(1 for step in workflow.workflow_steps.values() if step.status in [WorkflowStatus.COMPLETED, WorkflowStatus.APPROVED])
+        progress = (completed_steps / total_steps) if total_steps > 0 else 0
+
+        workflows.append({
+            'workflow_id': workflow.workflow_id,
+            'client_id': workflow.client_id,
+            'client_name': workflow.client_data.entity_name if workflow.client_data else 'Unknown',
+            'overall_status': workflow.overall_status.value,
+            'progress': progress,
+            'applicable_regulations_count': len(workflow.applicable_regulations),
+            'created_at': workflow.created_at.isoformat(),
+            'completed_at': workflow.completed_at.isoformat() if workflow.completed_at else None
+        })
+
+    return jsonify(workflows)
 
 # This allows you to run the app directly from the command line
 if __name__ == '__main__':
